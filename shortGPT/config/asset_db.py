@@ -13,8 +13,9 @@ from shortGPT.database.db_document import TinyMongoDocument
 AUDIO_EXTENSIONS = {".mp3", ".m4a", ".wav", ".flac", ".aac", ".ogg", ".wma", ".opus"}
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp"}
 VIDEO_EXTENSIONS = {".mp4", ".mkv", ".flv", ".avi", ".mov", ".wmv", ".webm", ".m4v"}
-TEMPLATE_ASSETS_DB_PATH = '.database/template_asset_db.json'
-ASSETS_DB_PATH = '.database/asset_db.json'
+TEMPLATE_ASSETS_DB_PATH = ".database/template_asset_db.json"
+ASSETS_DB_PATH = ".database/asset_db.json"
+
 
 class AssetType(enum.Enum):
     VIDEO = "video"
@@ -23,6 +24,7 @@ class AssetType(enum.Enum):
     BACKGROUND_MUSIC = "background music"
     BACKGROUND_VIDEO = "background video"
     OTHER = "other"
+
 
 class AssetDatabase:
     """
@@ -34,16 +36,22 @@ class AssetDatabase:
     if not Path(ASSETS_DB_PATH).exists() and Path(TEMPLATE_ASSETS_DB_PATH).exists():
         shutil.copy(TEMPLATE_ASSETS_DB_PATH, ASSETS_DB_PATH)
 
-    local_assets = TinyMongoDocument("asset_db", "asset_collection", "local_assets", create=True)
-    remote_assets = TinyMongoDocument("asset_db", "asset_collection", "remote_assets", create=True)
-    if not remote_assets._get('subscribe animation'):
-        remote_assets._save({
-            'subscribe animation':{
-                "type": AssetType.VIDEO.value,
-                "url": "https://www.youtube.com/watch?v=72WhUT0OM98",
-                "ts": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    local_assets = TinyMongoDocument(
+        "asset_db", "asset_collection", "local_assets", create=True
+    )
+    remote_assets = TinyMongoDocument(
+        "asset_db", "asset_collection", "remote_assets", create=True
+    )
+    if not remote_assets._get("subscribe animation"):
+        remote_assets._save(
+            {
+                "subscribe animation": {
+                    "type": AssetType.VIDEO.value,
+                    "url": "https://www.youtube.com/watch?v=72WhUT0OM98",
+                    "ts": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                }
             }
-        })
+        )
 
     @classmethod
     def asset_exists(cls, name: str) -> bool:
@@ -51,23 +59,27 @@ class AssetDatabase:
 
     @classmethod
     def add_local_asset(cls, name: str, asset_type: AssetType, path: str):
-        cls.local_assets._save({
-            name: {
-                "type": asset_type.value,
-                "path": path,
-                "ts": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        cls.local_assets._save(
+            {
+                name: {
+                    "type": asset_type.value,
+                    "path": path,
+                    "ts": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                }
             }
-        })
+        )
 
     @classmethod
     def add_remote_asset(cls, name: str, asset_type: AssetType, url: str):
-        cls.remote_assets._save({
-            name: {
-                "type": asset_type.value,
-                "url": url,
-                "ts": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        cls.remote_assets._save(
+            {
+                name: {
+                    "type": asset_type.value,
+                    "url": url,
+                    "ts": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                }
             }
-        })
+        )
 
     @classmethod
     def remove_asset(cls, name: str):
@@ -81,27 +93,35 @@ class AssetDatabase:
     @classmethod
     def get_df(cls, source=None) -> pd.DataFrame:
         data = []
-        if source is None or source == 'local':
+        if source is None or source == "local":
             for key, asset in cls.local_assets._get().items():
-                data.append({'name': key,
-                             'type': asset['type'],
-                             'link': asset['path'],
-                             'source': 'local',
-                             'ts': asset.get('ts')
-                             })
-        if source is None or source == 'youtube':
+                data.append(
+                    {
+                        "name": key,
+                        "type": asset["type"],
+                        "link": asset["path"],
+                        "source": "local",
+                        "ts": asset.get("ts"),
+                    }
+                )
+        if source is None or source == "youtube":
             for key, asset in cls.remote_assets._get().items():
-                data.append({'name': key,
-                            'type': asset['type'],
-                             'link': asset['url'],
-                             'source': 'youtube' if 'youtube' in asset['url'] else 'internet',
-                             'ts': asset.get('ts')
-                             })
+                data.append(
+                    {
+                        "name": key,
+                        "type": asset["type"],
+                        "link": asset["url"],
+                        "source": "youtube"
+                        if "youtube" in asset["url"]
+                        else "internet",
+                        "ts": asset.get("ts"),
+                    }
+                )
 
         df = pd.DataFrame(data)
-        if (not df.empty):
-            df.sort_values(by='ts', ascending=False, inplace=True)
-            return df.drop(columns='ts')
+        if not df.empty:
+            df.sort_values(by="ts", ascending=False, inplace=True)
+            return df.drop(columns="ts")
         return df
 
     @classmethod
@@ -110,9 +130,10 @@ class AssetDatabase:
         Loads all local assets from the static-assets folder into the database.
         """
         local_assets = cls.local_assets._get()
-        local_paths = {asset['path'] for asset in local_assets.values()}
-
-        for path in Path('public').rglob('*'):
+        local_paths = {asset["path"] for asset in local_assets.values()}
+        print(local_paths)
+        for path in Path("public").rglob("*"):
+            print(f"path - {path}")
             if path.is_file() and str(path) not in local_paths:
                 cls._add_local_asset_from_path(path)
 
@@ -161,9 +182,9 @@ class AssetDatabase:
             name (str): Name of the asset.
         """
         asset = cls.local_assets._get(name)
-        if 'required' not in asset:
+        if "required" not in asset:
             try:
-                Path(asset['path']).unlink()
+                Path(asset["path"]).unlink()
             except FileNotFoundError as e:
                 print(f"File not found: {e}")
             cls.local_assets._delete(name)
@@ -185,13 +206,15 @@ class AssetDatabase:
             asset_type = AssetType.VIDEO
         else:
             asset_type = AssetType.OTHER
-        cls.local_assets._save({
-            path.stem: {
-                "path": str(path),
-                "type": asset_type.value,
-                "ts": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        cls.local_assets._save(
+            {
+                path.stem: {
+                    "path": str(path),
+                    "type": asset_type.value,
+                    "ts": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                }
             }
-        })
+        )
 
     @classmethod
     def _update_local_asset_timestamp_and_get_link(cls, key: str) -> str:
@@ -205,9 +228,9 @@ class AssetDatabase:
             str: Link to the asset.
         """
         asset = cls.local_assets._get(key)
-        asset['ts'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        asset["ts"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         cls.local_assets._save({key: asset})
-        return asset['path']
+        return asset["path"]
 
     @classmethod
     def _get_remote_asset_link(cls, key: str) -> str:
@@ -221,11 +244,11 @@ class AssetDatabase:
             str: Link to the asset.
         """
         asset = cls.remote_assets._get(key)
-        asset['ts'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        asset["ts"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         cls.remote_assets._save({key: asset})
-        if 'youtube' in asset['url']:
+        if "youtube" in asset["url"]:
             return cls._get_youtube_asset_link(key, asset)
-        return asset['url']
+        return asset["url"]
 
     @classmethod
     def _get_local_asset_duration(cls, key: str) -> str:
@@ -239,12 +262,12 @@ class AssetDatabase:
             str: Duration of the asset.
         """
         asset = cls.local_assets._get(key)
-        asset['ts'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        asset["ts"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         cls.local_assets._save({key: asset})
-        if 'duration' not in asset and asset['duration'] is not None:
+        if "duration" not in asset and asset["duration"] is not None:
             _, duration = cls._update_local_asset_duration(key)
             return duration
-        return asset['duration']
+        return asset["duration"]
 
     @classmethod
     def _get_remote_asset_duration(cls, key: str) -> str:
@@ -258,10 +281,10 @@ class AssetDatabase:
             str: Duration of the asset.
         """
         asset = cls.remote_assets._get(key)
-        asset['ts'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        asset["ts"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         cls.remote_assets._save({key: asset})
-        if 'duration' in asset and asset['duration'] is not None:
-            return asset['duration']
+        if "duration" in asset and asset["duration"] is not None:
+            return asset["duration"]
         _, duration = cls._update_youtube_asset_duration(key)
         return duration
 
@@ -277,10 +300,10 @@ class AssetDatabase:
             str: Duration of the asset.
         """
         asset = cls.local_assets._get(key)
-        path = Path(asset['path'])
-        if any(t in asset['type'] for t in ['audio', 'video', 'music']):
+        path = Path(asset["path"])
+        if any(t in asset["type"] for t in ["audio", "video", "music"]):
             _, duration = get_asset_duration(str(path))
-            asset['duration'] = duration
+            asset["duration"] = duration
         else:
             duration = None
         cls.local_assets._save({key: asset})
@@ -298,12 +321,16 @@ class AssetDatabase:
             str: Duration of the asset.
         """
         asset = cls.remote_assets._get(key)
-        youtube_url = asset['url']
-        remote_url, duration = get_asset_duration(youtube_url, isVideo="video" in asset['type'])
-        asset.update({
-            "remote_url": base64.b64encode(remote_url.encode()).decode('utf-8'),
-            "duration": duration,
-        })
+        youtube_url = asset["url"]
+        remote_url, duration = get_asset_duration(
+            youtube_url, isVideo="video" in asset["type"]
+        )
+        asset.update(
+            {
+                "remote_url": base64.b64encode(remote_url.encode()).decode("utf-8"),
+                "duration": duration,
+            }
+        )
         cls.remote_assets._save({key: asset})
         return remote_url, duration
 
@@ -319,22 +346,29 @@ class AssetDatabase:
         Returns:
             str: Link to the asset.
         """
-        if any(t in asset['type'] for t in ['audio', 'music']):
-            local_audio_file, duration = downloadYoutubeAudio(asset['url'], f"public/{key}.wav")
-            cls.local_assets._save({
-                key: {
-                    'path': local_audio_file,
-                    'duration': duration,
-                    'type': 'audio',
-                    'ts': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        if any(t in asset["type"] for t in ["audio", "music"]):
+            local_audio_file, duration = downloadYoutubeAudio(
+                asset["url"], f"public/{key}.wav"
+            )
+            cls.local_assets._save(
+                {
+                    key: {
+                        "path": local_audio_file,
+                        "duration": duration,
+                        "type": "audio",
+                        "ts": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    }
                 }
-            })
+            )
             return local_audio_file
-        if 'remote_url' in asset:
-            asset['remote_url'] = base64.b64decode(asset['remote_url']).decode('utf-8')
-            expire_timestamp_match = re.search(r"expire=(\d+)", asset['remote_url'])
-            not_expired = expire_timestamp_match and int(expire_timestamp_match.group(1)) > time.time() + 1800
-            if not_expired and 'duration' in asset:
-                return asset['remote_url']
+        if "remote_url" in asset:
+            asset["remote_url"] = base64.b64decode(asset["remote_url"]).decode("utf-8")
+            expire_timestamp_match = re.search(r"expire=(\d+)", asset["remote_url"])
+            not_expired = (
+                expire_timestamp_match
+                and int(expire_timestamp_match.group(1)) > time.time() + 1800
+            )
+            if not_expired and "duration" in asset:
+                return asset["remote_url"]
         remote_url, _ = cls._update_youtube_asset_duration(key)
         return remote_url
