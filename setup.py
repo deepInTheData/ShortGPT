@@ -40,7 +40,7 @@ setup(
         "pillow",
         "protobuf",
         "edge-tts",
-        "moviepy @ https://github.com/deepInTheData/moviepy/archive/v25.12.2023.zip",
+        "moviepy @ https://github.com/deepInTheData/moviepy/archive/vresize-fix.zip",
         "progress",
         "questionary",
     ],
