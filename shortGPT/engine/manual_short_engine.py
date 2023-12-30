@@ -2,6 +2,7 @@ from shortGPT.audio.voice_module import VoiceModule
 from shortGPT.config.languages import Language
 from shortGPT.engine.content_short_engine import ContentShortEngine
 from shortGPT.editing_utils import editing_images
+from shortGPT.config.asset_db import AssetDatabase
 
 
 class ManualShortEngine(ContentShortEngine):
@@ -43,3 +44,8 @@ class ManualShortEngine(ContentShortEngine):
             self._db_timed_image_urls = editing_images.get_custom_images_timed(
                 self._db_timed_image_searches
             )
+
+    def _chooseBackgroundMusic(self):
+        self._db_background_music_url = AssetDatabase.get_asset_link(
+            self._db_background_music_name
+        )
