@@ -44,9 +44,3 @@ class ManualShortEngine(ContentShortEngine):
             self._db_timed_image_urls = editing_images.get_custom_images_timed(
                 self._db_timed_image_searches
             )
-
-    def _chooseBackgroundMusic(self):
-        if self._db_background_music_name:
-            self._db_background_music_url = AssetDatabase.get_asset_link(
-                self._db_background_music_name
-            )
