@@ -46,6 +46,7 @@ class ManualShortEngine(ContentShortEngine):
             )
 
     def _chooseBackgroundMusic(self):
-        self._db_background_music_url = AssetDatabase.get_asset_link(
-            self._db_background_music_name
-        )
+        if self._db_background_music_name:
+            self._db_background_music_url = AssetDatabase.get_asset_link(
+                self._db_background_music_name
+            )
